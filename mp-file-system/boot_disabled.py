@@ -5,6 +5,8 @@ print("Booting up the Pico")
 from machine import Pin
 from quadratureEncoder import QuadratureEncoder
 import network
+import _thread
+
 import time
 from sys import print_exception
 
@@ -24,8 +26,7 @@ def init_encoders():
                 app_state.mutable_free_sm_id)
             
             app_state.ENCODERS.append(q)
-            app_state.axes_positions.append(0) #create a axis positon instance and set it to 0
-            
+                       
             print(f"Encoder initialized, settings: {ax}")
                     
         except Exception as e:
@@ -60,13 +61,26 @@ def init_wlan():
         
         
     except Exception as e:
-            print(f"Error during initialization of wlan , {e}")
-            sys.print_exception(e)
-            return False
+        print(f"Error during initialization of wlan:")
+        print_exception(e)
+        return False
+        
+def make_resource_locks():
+    try:
+        app_state.axes_change_msg_lock = _thread.allocate_lock()
+        app_state.axes_set_msg_lock = _thread.allocate_lock()
+        print('Resource locks for inter core data transport, initialized')
+        return True
+    except Exception as e:
+        print(f"Error during initialization of resource locks:")
+        print_exception(e)
+        return False
+    
 
-time.sleep(5)
+
 app_state.boot_success = init_encoders()
 app_state.boot_success &= init_wlan()
+app_state.boot_success &= make_resource_locks()
 
 try:
     import main_disabled

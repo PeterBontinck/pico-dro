@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -225,7 +226,7 @@ html, body {
 
 }
 
-    </style>
+</style>
 </head>
 <body class="_app_color">
 
@@ -233,24 +234,27 @@ html, body {
         <div class="dro_frame">
             <div class="dro_readOuts">
                 <button class="disp _dro_disp disp_button _selected"
-                        data-shortlong="x">
-                    <div class="_span1x2">X</div>
-                    <div class="_small_font">measurement</div>
-                    <div id="xMain">9999.01</div>
+                        data-shortlong="axes0"
+                        id="readOut0">
+                    <div class="_span1x2" id="readOut0_Name"> X</div>
+                    <div class="_small_font" id="readOut0_Sec">measurement</div>
+                    <div id="readOut0_Main">9999.01</div>
                 </button>
                 
                 <button class="disp _dro_disp disp_button"
-                        data-shortlong="y">
-                    <div class="_span1x2">Y</div>
-                    <div class="_small_font">9999.01</div>
-                    <div id="yMain">9999.01</div>
+                        data-shortlong="axes1"
+                        id="readOut1">
+                    <div class="_span1x2" id="readOut1_Name">Y</div>
+                    <div class="_small_font" id="readOut1_Sec">9999.01</div>
+                    <div id="readOut1_Main">9999.01</div>
                 </button>
                 
                 <button class="disp _dro_disp disp_button"
-                        data-shortlong="z">
-                    <div class="_span1x2">Z</div>
-                    <div class="_small_font">9999.01</div>
-                    <div id="zMain">9999.01</div>
+                        data-shortlong="axes2"
+                        id="readOut2">
+                    <div class="_span1x2" id="readOut2_Name">Z</div>
+                    <div class="_small_font" id="readOut2_Sec">9999.01</div>
+                    <div id="readOut2_Main">9999.01</div>
                 </button>
             </div>
             
@@ -275,7 +279,7 @@ html, body {
             <button class="button _clear_entry" id="clearButton" onclick="handleClear()">C</button>
             <button class="button">M1</button>
             <button class="button">M2</button>
-            <button class="button">M3</button>
+            <button class="button _operator" onclick="invert()">+/-</button>
             
             <button class="button _digit " onclick="handleDigit('7')">7</button>
             <button class="button _digit" onclick="handleDigit('8')">8</button>
@@ -302,17 +306,33 @@ html, body {
 
 <script>
 
+//TODO total rewrite of this spaghetti
+
 
 let pressTimer = null;
 const LONG_PRESS_TIME = 600; 
 let timePress = 0;
 
-let video = null;
+let droDividers = [1,1,1]
+let PRECISION = 3
 
 //onload 
 
-document.addEventListener('DOMContentLoaded', (event) => {
+async function fetchSettings(){
+    const url = '/api/settings';
+ 
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (response.ok) return data;
+    else return none;
+}
+
+
+document.addEventListener('DOMContentLoaded', async (event) => {
     
+    const droSettings = await fetchSettings();
+
     const longShortButt = document.querySelectorAll('[data-shortlong]');
 
     longShortButt.forEach(but=>{
@@ -324,20 +344,38 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });  
 
     const digitButt = document.querySelectorAll('[data-digit]');
-    digitButt.forEach(but=>{
-            const arg = but.getAttribute('data-digit');
-            but.textContent = arg;
-            but.addEventListener('click',handleDigit);
-            });      
-    activateAxes('z');
+    digitButt.forEach(butt=>{
+        const arg = butt.getAttribute('data-digit');
+        butt.textContent = arg;
+        butt.addEventListener('click',handleDigit);
+        });      
+    
+    activateAxes('axes0');
+
+
+    const readOuts = document.querySelectorAll('._dro_disp');
+    readOuts.forEach(readOut =>{
+        ax_index = parseInt(readOut.id.slice(-1),10);
+        if (ax_index < droSettings.noAxes){
+            readOut.querySelector('[id$="_Name"]').textContent = droSettings.axesSettings[ax_index].name;
+            droDividers[ax_index] = droSettings.axesSettings[ax_index].divider;
+        }
+    })
+
+
+    if (droSettings.noAxes < 3){
+        const axis3 = document.getElementById('readOut2');
+        axis3.classList.add('_disable')
+    } 
+    if (droSettings.noAxes < 2){
+        const axis2 = document.getElementById('readOut1');
+        axis2.classList.add('_disable')
+    } 
+
 });
-
-
-let noSleepVideo = null;
 
 function handleSettings(){
     document.documentElement.requestFullscreen();
-    
 }
 
 //calculator logic
@@ -359,7 +397,7 @@ function updateSecondaryDisplay() {
         if (currentOperator === null) {
             secondaryDisplay.textContent = '';
         } else {
-            secondaryDisplay.textContent = `${previousValue} ${currentOperator}`;
+            secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION))} ${currentOperator}`;
         }
     }
 
@@ -411,7 +449,8 @@ function handleOperator(nextOperator) {
     }
 function calculate() {
         if (currentOperator === null) {
-            secondaryDisplay.textContent = `${mainDisplay.textContent} =`;
+            v = parseFloat(mainDisplay.textContent);
+            secondaryDisplay.textContent = `${Number(v.toFixed(PRECISION))} =`;
             lastResult = parseFloat(mainDisplay.textContent); 
             resultReady = true; 
             return; 
@@ -436,8 +475,8 @@ function calculate() {
         
         lastResult = result; 
         
-        secondaryDisplay.textContent = `${previousValue} ${currentOperator} ${currentValue} =`;
-        mainDisplay.textContent = result.toString();
+        secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION))} ${currentOperator} ${Number(currentValue.toFixed(PRECISION))} =`;
+        mainDisplay.textContent = Number(result.toFixed(PRECISION))
         
         previousValue = result;
         currentOperator = null;
@@ -446,7 +485,10 @@ function calculate() {
         clearButton.textContent = 'CE';
         resultReady = true; // NIEUW: Stel in dat het resultaat klaar is
     }
-
+function invert(){
+    v = parseFloat(mainDisplay.textContent);
+    mainDisplay.textContent = -Number(v.toFixed(PRECISION));
+}
 
 function handleClear() {
         if (clearStatus === 1) {
@@ -478,19 +520,21 @@ function handleUseDro(){
     handleClear();
 
     switch (activeAxes){
-        case 'x' : idToQuery = 'xMain'; break;
-        case 'y' : idToQuery = 'yMain'; break;
-        case 'z' : idToQuery = 'zMain'; break;
+        case 'axes0' : idToQuery = 'readOut0_Main'; break;
+        case 'axes1' : idToQuery = 'readOut1_Main'; break;
+        case 'axes2' : idToQuery = 'readOut2_Main'; break;
     }
 
     const element = document.getElementById(idToQuery)
-
-    mainDisplay.textContent = element.textContent.trim()    
+    mainDisplay.textContent = element.textContent.trim()
+  
 }
 
 //DRO logic
 
-let activeAxes = 'x'
+let activeAxes = 'axes0'
+let isTrgtMode = {'axes0' : false, 'axes1':false,  'axes2': false}
+let trgtValue =  {'axes0' : 0.0, 'axes1':0.0,  'axes2': 0.0}
 
 function startLongPress(action) {
     clearTimeout(pressTimer);
@@ -499,12 +543,12 @@ function startLongPress(action) {
 
     pressTimer = setTimeout(function() {
         switch (action){
-            case 'x' :
-            case 'y' : 
-            case 'z' : 
+            case 'axes0' :
+            case 'axes1' : 
+            case 'axes2' : 
                 activateAxes(action); break;
-            case 'trgt' : setTrgt(); break;
-            case 'msmt' : setMsmt(); break;
+            case 'trgt' : setTrgt(activeAxes); break;
+            case 'msmt' : setMsmt(activeAxes); break;
             }
         pressTimer = null; 
     }, LONG_PRESS_TIME);
@@ -523,8 +567,8 @@ function clearLongPress(action){
 		
 		if (timeSpend < LONG_PRESS_TIME) {
             switch (action){
-				case 'trgt' : showTrgt(); break;
-                case 'msmt' : showsMsmt(); break;
+				case 'trgt' : setTrgtMode(activeAxes); break;
+                case 'msmt' : setMsmtMode(activeAxes); break;
 				}
         }
         pressTimer = null;       
@@ -541,6 +585,43 @@ function activateAxes(action){
     activeAxes = action;
 }
 
+function setTrgtMode(axis){
+
+    if (isTrgtMode[axes]) return;
+    isTrgtMode[axis] = true
+    switch (axis){
+        case 'axes0' : idToQuery = 'readOut0_Sec'; id2ToQuery = 'readOut0_Main';  break;
+        case 'axes1' : idToQuery = 'readOut1_Sec'; id2ToQuery = 'readOut1_Main'; break;
+        case 'axes2' : idToQuery = 'readOut2_Sec'; id2ToQuery = 'readOut2_Main'; break;
+    }
+    const sec = document.getElementById(idToQuery)
+    const main = document.getElementById(id2ToQuery)
+    
+    main.textContent = (trgtValue[axes].toFixed(PRECISION) - parseFloat(main.textContent.trim())).toFixed(PRECISION)   
+    sec.textContent = trgtValue[axis].toFixed(PRECISION)   
+}
+
+function setTrgt(axis){
+    trgtValue[axis] = parseFloat(mainDisplay.textContent.trim())
+    setTrgtMode(axis)
+    handleClear()
+}
+
+function setMsmtMode(axes){
+    if (!isTrgtMode[axes]) return;
+
+    isTrgtMode[axes] = false
+    switch (axes){
+        case 'axes0' : idToQuery = 'readOut0_Sec'; id2ToQuery = 'readOut0_Main'; break;
+        case 'axes1' : idToQuery = 'readOut1_Sec'; id2ToQuery = 'readOut1_Main'; break;
+        case 'axes2' : idToQuery = 'readOut2_Sec'; id2ToQuery = 'readOut2_Main'; break;
+    }
+    const sec = document.getElementById(idToQuery)
+    const main = document.getElementById(id2ToQuery) 
+
+    main.textContent = (trgtValue[axes].toFixed(PRECISION)  - parseFloat(main.textContent.trim())).toFixed(PRECISION)  
+    sec.textContent = "measurement" 
+}
 
 //websocket
 
@@ -556,9 +637,51 @@ socket.onopen = function(e) {{
             }};
 
 socket.onmessage = function(event) {{
-              // Directe update zonder polling!
-              document.getElementById('xMain').textContent = event.data;
-            }};
+    const eventData = JSON.parse(event.data)
+    
+    updates = eventData.changed_positions
+
+    if (updates !== undefined){
+        Object.keys(updates).forEach (key => {
+            switch (key){
+                case 'ax0' : axes = "axes0"; idToQuery = 'readOut0_Main'; divider = droDividers[0]; break;
+                case 'ax1' : axes = "axes1"; idToQuery = 'readOut1_Main'; divider = droDividers[1]; break;
+                case 'ax2' : axes = "axes2"; idToQuery = 'readOut2_Main'; divider = droDividers[2]; break;
+                }
+            
+            
+            int_data = parseInt(updates[key], 10)
+            float_val = int_data / divider 
+
+            if (isTrgtMode[axes]){
+                float_val =  trgtValue[axes] - float_val ;
+            }
+
+            const element = document.getElementById(idToQuery);
+
+//TODO make precison part of settings per ax
+            element.textContent = float_val.toFixed(PRECISION)
+        }
+        )
+    }
+}};
+
+
+function setMsmt(axes){
+
+    setMsmtMode(axes)
+
+    const jsonToSend = { 
+        "set_axis" : axes,
+        "value" : mainDisplay.textContent
+    }
+
+    const strToSend = JSON.stringify(jsonToSend )
+
+    socket.send(strToSend)
+    handleClear()
+
+}
 
 </script>
 

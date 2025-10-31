@@ -1,8 +1,9 @@
-from lib.microdot import Microdot, Response, Request, send_file
+from lib.microdot import Microdot, Response, Request, send_file, abort
 from lib.websocket import with_websocket, WebSocket, WebSocketError
 
 import _thread
 import asyncio
+import settings
 from app_state import app, WLAN
 
 from sys import print_exception
@@ -19,6 +20,31 @@ def index(request):
 def favicon(request):
     return send_file('web_root/favicon.ico', content_type='image/x-icon')
 
+@app.route('/api/settings')
+def get_settings(request):
+    
+    try:     
+        axes_settings = [
+            {"name" : ax["NAME"],
+            "divider" : ax["PULSES_PER_MM"]
+            }
+            for ax in settings.AXES_SETTINGS[0:settings.NO_AXES]
+        ]
+        
+        return  {
+            "status": "success",
+            "noAxes" : settings.NO_AXES,
+            "isLathe" : settings.IS_LATHE, 
+            "axesSettings" : axes_settings
+        }
+    
+    except Exception as e:
+        print(f"Error from api:")
+        print_exception(e)
+        abort(500)
+       
+    
+
 @app.route('/ws')
 @with_websocket
 async def ws(request:Request, ws : WebSocket): 
@@ -34,7 +60,9 @@ async def ws(request:Request, ws : WebSocket):
             
             if client_data:
                 print(f"Bericht ontvangen: {client_data}")
-            
+                await axis_set_core0(client_data) #send data to core1
+               
+           
             await asyncio.sleep(0.1)
     
     except WebSocketError as e:
@@ -53,5 +81,23 @@ async def ws(request:Request, ws : WebSocket):
 async def start_app():
     print(f"starting webserver on http://{WLAN.ifconfig()[0]}:80")
     await app.run(host='0.0.0.0', port=80, debug=True)
+    
+async def broadcast(message):
+
+    for ws in app_state.clients:
+        try:
+            await ws.send(message)
+        except Exception as e:
+            # Client connection lost
+            print(f"Error from websocket:")
+            print_exception(e)
+            
+   
+async def axis_set_core0(msg):
+    while not app_state.axes_set_msg_lock.acquire(False):
+        await asyncio.sleep(0.1) #keep trying to get lock after some delay
+    app_state.axes_set_msg = msg
+    app_state.axes_set = True
+    app_state.axes_set_msg_lock.release()
     
     
