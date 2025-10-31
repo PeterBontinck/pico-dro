@@ -7,28 +7,28 @@ import json
 from quadratureEncoder import QuadratureEncoder
 from sys import print_exception
 
-def core1_set_axes(msg : str):
+def core1_set_axis(msg : str):
     
-    axes_mapping ={
-        "axes0":0,
-        "axes1":1,
-        "axes2":2
+    axis_mapping ={
+        "axis0":0,
+        "axis1":1,
+        "axis2":2
     }
     
     try:
         msg_dict = json.loads(msg)
-        axes_str = msg_dict['set_axes']
-        axes_index = axes_mapping[axes_str]
+        axis_str = msg_dict['set_axis']
+        axis_index = axis_mapping[axis_str]
         
         value_float = float(msg_dict['value'])
         if (value_float > 9999.9 ):
             raise ValueError('Value is > 9999.9')
-        value_scaled_int = int(round(value_float * settings.AXES_SETTINGS[axes_index]['PULSES_PER_MM']))
+        value_scaled_int = int(round(value_float * settings.AXES_SETTINGS[axis_index]['PULSES_PER_MM']))
         
-        return True, axes_index,  value_scaled_int
+        return True, axis_index,  value_scaled_int
         
     except Exception as e:
-        print(f"Error during core1_set_axes:")
+        print(f"Error during core1_set_axis:")
         print_exception(e)
         return False, None, None
         
@@ -55,22 +55,22 @@ def core1_loop(_thread):
                 axes_positions_changed[i] = (axes_positions_old[i] != axes_positions_core1[i] )
                 updateMsg |= axes_positions_changed[i]          
             
-            axes_to_set = False
+            axis_to_set = False
             app_state.axes_set_msg_lock.acquire()
             if app_state.axes_set:
-                    axes_set_msg = app_state.axes_set_msg
+                    axis_set_msg = app_state.axes_set_msg
                     app_state.axes_set = False
-                    axes_to_set = True
+                    axis_to_set = True
             app_state.axes_set_msg_lock.release()
         
-            if  axes_to_set:
-                valid_axes_to_set, axes_index, axes_value =   core1_set_axes(axes_set_msg)
-                if valid_axes_to_set:
-                    axes_positions_core1[axes_index] = axes_value
-                    axes_positions_changed[axes_index] = True
+            if  axis_to_set:
+                valid_axis_to_set, axis_index, axis_value =   core1_set_axis(axis_set_msg)
+                if valid_axis_to_set:
+                    axes_positions_core1[axis_index] = axis_value
+                    axes_positions_changed[axis_index] = True
              
                     updateMsg = True 
-                axes_to_set = False
+                axis_to_set = False
             
             if not updateMsg:
                 continue # no changes -> poll again

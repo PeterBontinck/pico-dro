@@ -33,16 +33,18 @@ def serve_get_settings(request):
     
     try:     
         axes_settings = [
-            {"name" : ax["NAME"],
-            "divider" : ax["PULSES_PER_MM"]
+            {"name" : axis["NAME"],
+            "divider" : axis["PULSES_PER_MM"],
+            "displayPrecision" :  axis["DISPLAY_PRECISION"]
             }
-            for ax in settings.AXES_SETTINGS[0:settings.NO_AXES]
+            for axis in settings.AXES_SETTINGS[0:settings.NO_AXES]
         ]
         
         return  {
             "status": "success",
             "noAxes" : settings.NO_AXES,
             "isLathe" : settings.IS_LATHE, 
+            "noDisplayDigits": settings.NO_DISPLAY_DIGITS,
             "axesSettings" : axes_settings
         }
     
@@ -68,7 +70,7 @@ async def ws(request:Request, ws : WebSocket):
             
             if client_data:
                 print(f"Bericht ontvangen: {client_data}")
-                await axis_set_core0(client_data) #send data to core1
+                await axes_set_core0(client_data) #send data to core1
                
            
             await asyncio.sleep(0.1)
@@ -101,7 +103,7 @@ async def broadcast(message):
             print_exception(e)
             
    
-async def axis_set_core0(msg):
+async def axes_set_core0(msg):
     while not app_state.axes_set_msg_lock.acquire(False):
         await asyncio.sleep(0.1) #keep trying to get lock after some delay
     app_state.axes_set_msg = msg

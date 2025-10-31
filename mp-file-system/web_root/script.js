@@ -5,8 +5,14 @@ let pressTimer = null;
 const LONG_PRESS_TIME = 600; 
 let timePress = 0;
 
-let droDividers = [1,1,1]
-let PRECISION = 3
+let droDividers = [1,1,1];
+let PRECISION = 3;
+
+/** @type {DroAxis[]} */
+let axesList =[null, null, null];
+
+/** @type {DroAxis} */
+let activeAxis = axesList[0];
 
 //onload 
 
@@ -42,27 +48,23 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         butt.addEventListener('click',handleDigit);
         });      
     
-    activateAxes('axes0');
-
-
-    const readOuts = document.querySelectorAll('.dro__disp');
+    const readOuts = document.querySelectorAll('.js-dro-axis');
     readOuts.forEach(readOut =>{
-        ax_index = parseInt(readOut.id.slice(-1),10);
-        if (ax_index < droSettings.noAxes){
-            readOut.querySelector('[id$="_Name"]').textContent = droSettings.axesSettings[ax_index].name;
-            droDividers[ax_index] = droSettings.axesSettings[ax_index].divider;
+        const axis_id = readOut.dataset.id
+        const axisIndex = parseInt(axis_id.slice(-1),10);
+        if (axisIndex < droSettings.noAxes){
+            const label = droSettings.axesSettings[axisIndex].name;
+            const precision = parseInt(droSettings.axesSettings[axisIndex].displayPrecision, 10);
+            const noDigits = parseInt(droSettings.noDisplayDigits, 10);
+            const divider = parseInt(droSettings.axesSettings[axisIndex].divider, 10);
+            axesList[axisIndex] = new DroAxis(axis_id, label, readOut, divider, precision,noDigits);
         }
+        else readOut.classList.add('is-disabled')
     })
 
+    
+    activateAxis(0);
 
-    if (droSettings.noAxes < 3){
-        const axes3 = document.getElementById('readOut2');
-        axes3.classList.add('is-disabled')
-    } 
-    if (droSettings.noAxes < 2){
-        const axes2 = document.getElementById('readOut1');
-        axes2.classList.add('is-disabled')
-    } 
 
 });
 
@@ -210,23 +212,12 @@ function clearAll(isError = false) {
 
 function handleUseDro(){
     handleClear();
-
-    switch (activeAxes){
-        case 'axes0' : idToQuery = 'readOut0_Main'; break;
-        case 'axes1' : idToQuery = 'readOut1_Main'; break;
-        case 'axes2' : idToQuery = 'readOut2_Main'; break;
-    }
-
-    const element = document.getElementById(idToQuery)
-    mainDisplay.textContent = element.textContent.trim()
+    mainDisplay.textContent = activeAxis.getValue();
   
 }
 
 //DRO logic
 
-let activeAxes = 'axes0'
-let isTrgtMode = {'axes0' : false, 'axes1':false,  'axes2': false}
-let trgtValue =  {'axes0' : 0.0, 'axes1':0.0,  'axes2': 0.0}
 
 function startLongPress(action) {
     clearTimeout(pressTimer);
@@ -235,12 +226,11 @@ function startLongPress(action) {
 
     pressTimer = setTimeout(function() {
         switch (action){
-            case 'axes0' :
-            case 'axes1' : 
-            case 'axes2' : 
-                activateAxes(action); break;
-            case 'trgt' : setTrgt(activeAxes); break;
-            case 'msmt' : setMsmt(activeAxes); break;
+            case 'axis0' : activateAxis(0); break;
+            case 'axis1' : activateAxis(1); break;
+            case 'axis2' : activateAxis(2); break; 
+            case 'trgt' : activeAxis_setTrgt(); break;
+            case 'msmt' : activeAxis_setMsmt(); break;
             }
         pressTimer = null; 
     }, LONG_PRESS_TIME);
@@ -259,60 +249,33 @@ function clearLongPress(action){
 		
 		if (timeSpend < LONG_PRESS_TIME) {
             switch (action){
-				case 'trgt' : setTrgtMode(activeAxes); break;
-                case 'msmt' : setMsmtMode(activeAxes); break;
+				case 'trgt' : activeAxis.setMode('trgt'); break;
+                case 'msmt' : activeAxis.setMode('msmt'); break;
 				}
         }
         pressTimer = null;       
 }
 
-function activateAxes(action){
-    const axes = document.querySelectorAll('.dro__disp');
-    axes.forEach(ax=>{
-        ax.classList.remove('is-selected')
+function activateAxis(axisIndex){
+
+    axesList.forEach(axis=>{
+        if (axis instanceof DroAxis)axis.deactivate();
     })
 
-    const element = document.querySelector(`[data-shortlong="${action}"]`); 
-    element.classList.add('is-selected');
-    activeAxes = action;
+    axesList[axisIndex].activate();
+    activeAxis = axesList[axisIndex]
 }
 
-function setTrgtMode(axes){
-
-    if (isTrgtMode[axes]) return;
-    isTrgtMode[axes] = true
-    switch (axes){
-        case 'axes0' : idToQuery = 'readOut0_Sec'; id2ToQuery = 'readOut0_Main';  break;
-        case 'axes1' : idToQuery = 'readOut1_Sec'; id2ToQuery = 'readOut1_Main'; break;
-        case 'axes2' : idToQuery = 'readOut2_Sec'; id2ToQuery = 'readOut2_Main'; break;
-    }
-    const sec = document.getElementById(idToQuery)
-    const main = document.getElementById(id2ToQuery)
-    
-    main.textContent = (trgtValue[axes].toFixed(PRECISION) - parseFloat(main.textContent.trim())).toFixed(PRECISION)   
-    sec.textContent = trgtValue[axes].toFixed(PRECISION)   
-}
-
-function setTrgt(axes){
-    trgtValue[axes] = parseFloat(mainDisplay.textContent.trim())
-    setTrgtMode(axes)
+function activeAxis_setTrgt(){
+    const value = parseFloat(mainDisplay.textContent.trim())
+    activeAxis.setTrgt(value) 
     handleClear()
 }
 
-function setMsmtMode(axes){
-    if (!isTrgtMode[axes]) return;
-
-    isTrgtMode[axes] = false
-    switch (axes){
-        case 'axes0' : idToQuery = 'readOut0_Sec'; id2ToQuery = 'readOut0_Main'; break;
-        case 'axes1' : idToQuery = 'readOut1_Sec'; id2ToQuery = 'readOut1_Main'; break;
-        case 'axes2' : idToQuery = 'readOut2_Sec'; id2ToQuery = 'readOut2_Main'; break;
-    }
-    const sec = document.getElementById(idToQuery)
-    const main = document.getElementById(id2ToQuery) 
-
-    main.textContent = (trgtValue[axes].toFixed(PRECISION)  - parseFloat(main.textContent.trim())).toFixed(PRECISION)  
-    sec.textContent = "measurement" 
+function activeAxis_setMsmt(){
+    const value = parseFloat(mainDisplay.textContent.trim())
+    activeAxis.setMsmt(value , socket) 
+    handleClear()
 }
 
 //websocket
@@ -336,40 +299,133 @@ socket.onmessage = function(event) {{
     if (updates !== undefined){
         Object.keys(updates).forEach (key => {
             switch (key){
-                case 'ax0' : axes = "axes0"; idToQuery = 'readOut0_Main'; divider = droDividers[0]; break;
-                case 'ax1' : axes = "axes1"; idToQuery = 'readOut1_Main'; divider = droDividers[1]; break;
-                case 'ax2' : axes = "axes2"; idToQuery = 'readOut2_Main'; divider = droDividers[2]; break;
+                case 'ax0' : axisIndex = 0 ;  break;
+                case 'ax1' : axisIndex = 1 ; break;
+                case 'ax2' : axisIndex = 2 ; break;
                 }
-            
-            
-            int_data = parseInt(updates[key], 10)
-            float_val = int_data / divider 
 
-            if (isTrgtMode[axes]){
-                float_val =  trgtValue[axes] - float_val ;
-            }
+            int_data = parseInt(updates[key], 10);
 
-            const element = document.getElementById(idToQuery);
-
-//TODO make precison part of settings per ax
-            element.textContent = float_val.toFixed(PRECISION)
-        }
-        )
+            axesList[axisIndex].setValue(int_data);
+        }) 
     }
 }};
 
 
-function setMsmt(axes){
 
-    setMsmtMode(axes)
+function isNotRealNumber(value){
+    return !(typeof value === 'number' && !Number.isNaN(value));
+}
 
-    const jsonToSend = { 
-        "set_axes" : axes,
-        "value" : mainDisplay.textContent
+class DroAxis{
+    /**
+     * 
+     * @param {string} id as used in the WS api
+     * @param {string} label for the axis (one Letter)
+     * @param {HTMLElement} domContainer 
+     * @param {number} divider the counts per mm of the encoder
+     * @param {number} precision the number of digits after the decimal
+     * @param {number} noDigits the max number of digits of the display excluding sign and decimal point.
+     */
+    constructor(id, label, domContainer, divider, precision, noDigits){
+        this.domContainer = domContainer
+        this.nameField =domContainer.querySelector('.js-name');
+        this.mainField = domContainer.querySelector('.js-main');
+        this.secField = domContainer.querySelector('.js-sec');
+
+        this.id = id
+
+        this.value = 0.0;
+        this.target = 0.0;
+        this.dividerBase = divider;
+        this.dividerActual = divider;
+
+        this.modeIsTrgt = false;
+
+        this.precision = precision;
+        this.limitValue = (10**(noDigits - precision )) * divider
+
+        this.nameField.textContent = label
     }
 
-    const strToSend = JSON.stringify(jsonToSend )
+    /**
+     * 
+     * @param {any} value  to check on type and absolute value
+     * @returns true :  if illegal
+     */
+    #illegalValue(value){
+        if (isNotRealNumber(value)){
+            console.error("DRO value is not a number : ${value}");
+            return true;
+        }
+        if (Math.abs(value) >= this.limitValue){
+            console.error("DRO absolute value is to big : ${value}");
+            return true;
+        } 
+        
+        return false;
+    }
 
-    socket.send(strToSend)
-    handleClear()
+    setValue(value){
+        if (this.#illegalValue(value)) return;
+
+        this.value = value;
+
+        let float_val = this.value / this.dividerActual;
+        if (this.modeIsTrgt){
+            float_val = this.target - float_val;
+        }
+
+        this.mainField.textContent=  float_val.toFixed(this.precision);
+    }
+
+
+    setMode(mode){/* 'trgt' or 'msmt'*/
+        switch (mode){
+            case 'trgt' :
+                this.modeIsTrgt = true;
+                this.secField.textContent = this.target.toFixed(this.precision);
+                break;
+            case 'msmt' :
+                this.modeIsTrgt = false;
+                this.secField.textContent = 'measurement';
+                break;
+            default     :
+                console.error('DRO illegal mode: ${mode}');
+        }
+        this.setValue(this.value);
+    }
+
+    setMsmt(value, socket){
+        if (this.#illegalValue(value)) return;
+
+        this.setMode('msmt');
+
+        const jsonToSend = { 
+            "set_axis" : this.id,
+            "value" : value
+        }
+        const strToSend = JSON.stringify(jsonToSend )
+        socket.send(strToSend)
+    }
+
+    setTrgt(value){
+        if (this.#illegalValue(value)) return;
+        
+        this.target = value;
+        this.setMode('trgt');
+    }
+
+    activate(){
+        this.domContainer.classList.add('is-selected')
+    }
+
+    deactivate(){
+        this.domContainer.classList.remove('is-selected')
+    }
+
+    getValue(){
+        return Number(this.mainField.textContent.trim()) ;
+    }
+
 }
