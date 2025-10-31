@@ -7,7 +7,7 @@ import json
 from quadratureEncoder import QuadratureEncoder
 from sys import print_exception
 
-def core1_set_axis(msg : str):
+def core1_set_axes(msg : str):
     
     axes_mapping ={
         "axes0":0,
@@ -17,7 +17,7 @@ def core1_set_axis(msg : str):
     
     try:
         msg_dict = json.loads(msg)
-        axes_str = msg_dict['set_axis']
+        axes_str = msg_dict['set_axes']
         axes_index = axes_mapping[axes_str]
         
         value_float = float(msg_dict['value'])
@@ -28,7 +28,7 @@ def core1_set_axis(msg : str):
         return True, axes_index,  value_scaled_int
         
     except Exception as e:
-        print(f"Error during core1_set_axis:")
+        print(f"Error during core1_set_axes:")
         print_exception(e)
         return False, None, None
         
@@ -64,7 +64,7 @@ def core1_loop(_thread):
             app_state.axes_set_msg_lock.release()
         
             if  axes_to_set:
-                valid_axes_to_set, axes_index, axes_value =   core1_set_axis(axes_set_msg)
+                valid_axes_to_set, axes_index, axes_value =   core1_set_axes(axes_set_msg)
                 if valid_axes_to_set:
                     axes_positions_core1[axes_index] = axes_value
                     axes_positions_changed[axes_index] = True
@@ -123,7 +123,7 @@ async def broadcast_scheduler_task():
                 await app.broadcast(msg_core0)
                 do_broadcast = False    
 
-async def axis_set_core0(msg):
+async def axes_set_core0(msg):
     while not app_state.axes_set_msg_lock.acquire(False):
         await asyncio.sleep(0.1) #keep trying to get lock after some delay
     app_state.axes_set_msg = msg

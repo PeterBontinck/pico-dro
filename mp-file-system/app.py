@@ -12,16 +12,24 @@ app = Microdot()
 import app_state
 
 @app.route('/')
-def index(request):
+def serve_index(request):
     #return open('web_root/index_NoWWS.html').read(), 200, {'Content-Type': 'text/html'}
     return send_file('web_root/index_NoWWS.html', content_type='text/html')
 
 @app.route('/favicon.ico')
-def favicon(request):
+def serve_favicon(request):
     return send_file('web_root/favicon.ico', content_type='image/x-icon')
 
+@app.route('/script.js')
+def serve_javascript(request):
+    return send_file('web_root/script.js', content_type='application/javascript')
+
+@app.route('/style.css')
+def serve_style(request):
+    return send_file('web_root/style.css', content_type='text/css')
+
 @app.route('/api/settings')
-def get_settings(request):
+def serve_get_settings(request):
     
     try:     
         axes_settings = [
