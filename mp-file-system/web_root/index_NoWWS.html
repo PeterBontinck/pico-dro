@@ -41,7 +41,39 @@
             </div>
             
             <div class="grid1x4">
-                    <button class="btn extra_small_font" onclick="handleSettings()"> settings</button>
+                    <div class="dropdown-container">
+                        <input type="checkbox" id="menu-toggle" class="menu-toggle-input">
+
+                        <label for="menu-toggle" class="btn menu-button extra_small_font">
+                            Options
+                        </label>
+                        
+                        <ul class="js-menu dropdown-menu small_font">      
+                            <li class="menu-item" data-action="mode">
+                                Lathe mode:
+                                 <ul class="submenu">
+                                    <li data-action="diam" id="option-diam">Diameter</li>
+                                    <li data-action="radius" id="option-radius">Normal</li>
+                                </ul>
+                            </li>
+
+                            <li class="menu-item" data-action="units">
+                                Units:
+                                <ul class="submenu">
+                                    <li data-action="mm" id="option-mm">Metric - mm</li>
+                                    <li data-action="inch" id="option-inch">Imperial - inch</li>
+                                </ul>
+                            </li>
+
+                            <li class="menu-item" data-action="view">
+                                View:
+                                <ul class="submenu">
+                                    <li data-action="fullscreen" id="option-fullscreen">Toggle Fullscreen</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    </div>
                     <button class="btn extra_small_font "
                             data-shortlong="trgt"> 
                         Trgt

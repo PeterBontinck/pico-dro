@@ -6,6 +6,8 @@
         --dro-disptop : 7dvh;
         --dro-dispbot : 19dvh;
 
+        --menu-bot: 5vh;
+
         --dro-readouth: 28dvh;
 
         --disp-margbot : 1dvh;
@@ -34,6 +36,8 @@
 
         --dro-disptop : 3.5dvh;
         --dro-dispbot : 9.5dvh;
+
+        --menu-bot: 52.5dvh;
 
         --dro-readouth: 14dvh;
 
@@ -229,4 +233,54 @@ html, body {
 }
 .extra_small_font{
     font-size: var(--xsfont);
+}
+
+
+.dropdown-container {
+    display: flex;
+}
+
+.menu-toggle-input {
+    display: none; /* hide checkboxes*/
+}
+
+
+
+.menu-button {
+    user-select: none; 
+    display: flex;
+}
+
+.dropdown-menu {
+    position: absolute;
+    bottom: var(--menu-bot);
+    list-style: none;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 5px 5px 10px rgb(0 0 0 / 46%);
+    border-radius: 10px;
+    /* standard hide */
+    display: none;
+    z-index: 1000;
+}
+
+.menu-toggle-input:checked ~ .dropdown-menu {
+    display: block; /* show when checked*/
+}
+.menu-item {
+    font-weight: bold;
+}
+
+.submenu {
+    list-style: none;
+    font-weight: normal; 
+}
+
+.submenu li {
+    padding: 5px 15px 5px 25px; /* intendant */
+    border-radius: 10px;
+}
+
+.option-is-selected {
+    background-color: #0051ffc7;
 }

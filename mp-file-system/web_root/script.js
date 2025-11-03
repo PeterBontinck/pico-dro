@@ -14,6 +14,11 @@ let axesList =[null, null, null];
 /** @type {DroAxis} */
 let activeAxis = axesList[0];
 
+let isFullscreen = false;
+
+
+let imperial = false;
+let diameterMode = false;
 //onload 
 
 async function fetchSettings(){
@@ -65,12 +70,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     
     activateAxis(0);
 
-
 });
 
-function handleSettings(){
-    document.documentElement.requestFullscreen();
-}
 
 //calculator logic
 
@@ -83,8 +84,7 @@ let currentOperator = null;
 let newNumberStarted = true;
 let clearStatus = 0; 
 let lastResult = 0; 
-let resultReady = false; // Is het laatste resultaat getoond na '='?
-
+let resultReady = false; 
 
 
 function updateSecondaryDisplay() {
@@ -97,11 +97,11 @@ function updateSecondaryDisplay() {
 
 function handleDigit(digit) {
         
-        // Controleer of de gebruiker begint met een nieuw nummer na het indrukken van '=' of Initialiseren
+      
         if (resultReady) {
-            mainDisplay.textContent = '0'; // Wis het resultaat
-            resultReady = false; // Resultaat is nu gewist
-            newNumberStarted = true; // Zorg dat het cijfer het display vervangt
+            mainDisplay.textContent = '0'; 
+            resultReady = false;
+            newNumberStarted = true; 
         }
 
         if (newNumberStarted) {
@@ -121,9 +121,6 @@ function handleDigit(digit) {
         clearStatus = 1; 
         clearButton.textContent = 'CE'; 
     }
-
-
-
 
 function handleOperator(nextOperator) {
         if (currentOperator !== null && !newNumberStarted) {
@@ -177,7 +174,7 @@ function calculate() {
         newNumberStarted = true;
         clearStatus = 1; 
         clearButton.textContent = 'CE';
-        resultReady = true; // NIEUW: Stel in dat het resultaat klaar is
+        resultReady = true; 
     }
 function invert(){
     v = parseFloat(mainDisplay.textContent);
@@ -217,7 +214,6 @@ function handleUseDro(){
 }
 
 //DRO logic
-
 
 function startLongPress(action) {
     clearTimeout(pressTimer);
@@ -311,7 +307,76 @@ socket.onmessage = function(event) {{
     }
 }};
 
+document.querySelector('.js-menu').addEventListener('click', function(event) {
+    const clickedElement = event.target;
+    const action = clickedElement.getAttribute('data-action');
 
+    if (action) {
+        document.getElementById('menu-toggle').checked = false;
+        switch(action){
+            case 'fullscreen' : toggleFullscreen(); break;
+            case 'mm' : useBananas(false); break;
+            case 'inch' : useBananas(true); break;
+            case 'diam' : useDiameter(true); break;
+            case 'radius' : useDiameter(false); break;
+           }
+
+    }
+});
+
+function toggleFullscreen(){
+    isFullscreen = !isFullscreen;
+    const element = document.getElementById("option-fullscreen");
+    if (isFullscreen) {
+        document.documentElement.requestFullscreen()
+            .then(()=>{
+                element.classList.add('option-is-selected');
+            })
+    }
+
+    else {
+        document.exitFullscreen()
+            .then(()=>{
+                    element.classList.remove('option-is-selected');
+                })
+    }
+}
+
+function useBananas(x){
+    const elementMm = document.getElementById("option-mm");
+    const elementInch = document.getElementById("option-inch");
+
+    if (x){
+        elementInch.classList.add('option-is-selected');
+        elementMm.classList.remove('option-is-selected');
+        axesList.forEach(axis=>{if (axis instanceof DroAxis) axis.putUnit(25.4);});
+    }
+
+
+    else{
+        elementMm.classList.add('option-is-selected');
+        elementInch.classList.remove('option-is-selected');
+        axesList.forEach(axis=>{if (axis instanceof DroAxis) axis.putUnit(1);});
+    }
+}
+
+
+function useDiameter(x){
+    const elementD = document.getElementById("option-diam");
+    const elementR = document.getElementById("option-radius");
+
+    if (x){
+        elementD.classList.add('option-is-selected');
+        elementR.classList.remove('option-is-selected');
+        axesList[0].putDiameterMode(true)
+    }
+
+    else{
+        elementR.classList.add('option-is-selected');
+        elementD.classList.remove('option-is-selected');
+        axesList[0].putDiameterMode(false)
+    }
+}
 
 function isNotRealNumber(value){
     return !(typeof value === 'number' && !Number.isNaN(value));
@@ -338,11 +403,15 @@ class DroAxis{
         this.value = 0.0;
         this.target = 0.0;
         this.dividerBase = divider;
+
+        this.mmInUnit = 1;
+        this.diameterFactor = 1; /*set tot 2 for diameter mode*/
         this.dividerActual = divider;
 
         this.modeIsTrgt = false;
 
         this.precision = precision;
+        this.noDigits = noDigits;
         this.limitValue = (10**(noDigits - precision )) * divider
 
         this.nameField.textContent = label
@@ -403,7 +472,7 @@ class DroAxis{
 
         const jsonToSend = { 
             "set_axis" : this.id,
-            "value" : value
+            "value" : value * this.dividerActual
         }
         const strToSend = JSON.stringify(jsonToSend )
         socket.send(strToSend)
@@ -426,6 +495,24 @@ class DroAxis{
 
     getValue(){
         return Number(this.mainField.textContent.trim()) ;
+    }
+
+    putUnit(mmInUnit){
+         if (!(typeof mmInUnit === 'number' && !Number.isNaN(mmInUnit)))
+            console.error('mmInUnit illegal value : ${mmInUnit}');
+        
+        this.mmInUnit = mmInUnit;
+
+        this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
+        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual
+
+    }
+
+    putDiameterMode(x){
+        if (x) this.diameterFactor=2;
+        else this.diameterFactor = 1;
+        this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
+        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual    
     }
 
 }
