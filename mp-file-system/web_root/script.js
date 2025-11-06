@@ -6,7 +6,9 @@ const LONG_PRESS_TIME = 600;
 let timePress = 0;
 
 let droDividers = [1,1,1];
-let PRECISION = 3;
+let PRECISION_CALC = 4;
+
+let droSettings = null;
 
 /** @type {DroAxis[]} */
 let axesList =[null, null, null];
@@ -34,7 +36,7 @@ async function fetchSettings(){
 
 document.addEventListener('DOMContentLoaded', async (event) => {
     
-    const droSettings = await fetchSettings();
+    droSettings = await fetchSettings();
 
     const longShortButt = document.querySelectorAll('[data-shortlong]');
 
@@ -58,13 +60,28 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         const axis_id = readOut.dataset.id
         const axisIndex = parseInt(axis_id.slice(-1),10);
         if (axisIndex < droSettings.noAxes){
-            const label = droSettings.axesSettings[axisIndex].name;
-            const precision = parseInt(droSettings.axesSettings[axisIndex].displayPrecision, 10);
             const noDigits = parseInt(droSettings.noDisplayDigits, 10);
-            const divider = parseInt(droSettings.axesSettings[axisIndex].divider, 10);
-            axesList[axisIndex] = new DroAxis(axis_id, label, readOut, divider, precision,noDigits);
+            let axisSettings ={};
+                
+            axisSettings.name = droSettings.axesSettings[axisIndex].name;
+            axisSettings.divider = parseInt(droSettings.axesSettings[axisIndex].divider, 10);
+            axisSettings.precisionMm = parseInt(droSettings.axesSettings[axisIndex].displayPrecisionMm, 10)
+            axisSettings.precisionInch =parseInt(droSettings.axesSettings[axisIndex].displayPrecisionInch, 10)
+
+            axesList[axisIndex] = new DroAxis(axis_id, readOut, axisSettings,noDigits);
         }
-        else readOut.classList.add('is-disabled')
+        else readOut.classList.add('is-disabled');
+
+    if (!droSettings.isLathe){
+        const modeMenu = document.querySelector('[data-action="mode"]');
+        modeMenu.classList.add('is-disabled');    
+    }
+
+
+        useBananas(false); /*by default use mm*/
+        useDiameter(false);
+
+    /*TODO set default options from settings?*/
     })
 
     
@@ -91,7 +108,7 @@ function updateSecondaryDisplay() {
         if (currentOperator === null) {
             secondaryDisplay.textContent = '';
         } else {
-            secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION))} ${currentOperator}`;
+            secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION_CALC))} ${currentOperator}`;
         }
     }
 
@@ -141,7 +158,7 @@ function handleOperator(nextOperator) {
 function calculate() {
         if (currentOperator === null) {
             v = parseFloat(mainDisplay.textContent);
-            secondaryDisplay.textContent = `${Number(v.toFixed(PRECISION))} =`;
+            secondaryDisplay.textContent = `${Number(v.toFixed(PRECISION_CALC))} =`;
             lastResult = parseFloat(mainDisplay.textContent); 
             resultReady = true; 
             return; 
@@ -166,8 +183,8 @@ function calculate() {
         
         lastResult = result; 
         
-        secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION))} ${currentOperator} ${Number(currentValue.toFixed(PRECISION))} =`;
-        mainDisplay.textContent = Number(result.toFixed(PRECISION))
+        secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION_CALC))} ${currentOperator} ${Number(currentValue.toFixed(PRECISION_CALC))} =`;
+        mainDisplay.textContent = Number(result.toFixed(PRECISION_CALC))
         
         previousValue = result;
         currentOperator = null;
@@ -178,7 +195,7 @@ function calculate() {
     }
 function invert(){
     v = parseFloat(mainDisplay.textContent);
-    mainDisplay.textContent = -Number(v.toFixed(PRECISION));
+    mainDisplay.textContent = -Number(v.toFixed(PRECISION_CALC));
 }
 
 function handleClear() {
@@ -346,17 +363,21 @@ function useBananas(x){
     const elementMm = document.getElementById("option-mm");
     const elementInch = document.getElementById("option-inch");
 
+ 
+
     if (x){
         elementInch.classList.add('option-is-selected');
         elementMm.classList.remove('option-is-selected');
-        axesList.forEach(axis=>{if (axis instanceof DroAxis) axis.putUnit(25.4);});
+        axesList.forEach(axis=>{
+           if (axis instanceof DroAxis) axis.putUnit(25.4 );});
     }
 
 
     else{
         elementMm.classList.add('option-is-selected');
         elementInch.classList.remove('option-is-selected');
-        axesList.forEach(axis=>{if (axis instanceof DroAxis) axis.putUnit(1);});
+        axesList.forEach(axis=>{
+            if (axis instanceof DroAxis) axis.putUnit(1);});
     }
 }
 
@@ -386,35 +407,36 @@ class DroAxis{
     /**
      * 
      * @param {string} id as used in the WS api
-     * @param {string} label for the axis (one Letter)
-     * @param {HTMLElement} domContainer 
-     * @param {number} divider the counts per mm of the encoder
-     * @param {number} precision the number of digits after the decimal
+    * @param {HTMLElement} domContainer 
+     * @param {Object} axisSettings the settings JSON 
      * @param {number} noDigits the max number of digits of the display excluding sign and decimal point.
      */
-    constructor(id, label, domContainer, divider, precision, noDigits){
+    constructor(id, domContainer, axisSettings, noDigits){
         this.domContainer = domContainer
         this.nameField =domContainer.querySelector('.js-name');
         this.mainField = domContainer.querySelector('.js-main');
         this.secField = domContainer.querySelector('.js-sec');
 
         this.id = id
+        this.axisSettings = axisSettings
 
         this.value = 0.0;
         this.target = 0.0;
-        this.dividerBase = divider;
+        this.dividerBase = this.axisSettings.divider;
 
         this.mmInUnit = 1;
         this.diameterFactor = 1; /*set tot 2 for diameter mode*/
-        this.dividerActual = divider;
+        this.dividerActual = this.dividerBase;
 
         this.modeIsTrgt = false;
 
-        this.precision = precision;
+        this.precision =this.axisSettings.precisionMm;
         this.noDigits = noDigits;
-        this.limitValue = (10**(noDigits - precision )) * divider
+        this.limitValue = (10**(noDigits - this.precision )) * this.dividerActual
 
-        this.nameField.textContent = label
+        this.nameField.textContent = this.axisSettings.name
+        this.post_fix = 'mm'
+        this.pre_fix = ''
     }
 
     /**
@@ -453,11 +475,11 @@ class DroAxis{
         switch (mode){
             case 'trgt' :
                 this.modeIsTrgt = true;
-                this.secField.textContent = this.target.toFixed(this.precision);
+                this.secField.textContent = this.pre_fix + this.target.toFixed(this.precision) + this.post_fix;
                 break;
             case 'msmt' :
                 this.modeIsTrgt = false;
-                this.secField.textContent = 'measurement';
+                this.secField.textContent = this.pre_fix + '[' + this.post_fix + ']';
                 break;
             default     :
                 console.error('DRO illegal mode: ${mode}');
@@ -502,17 +524,39 @@ class DroAxis{
             console.error('mmInUnit illegal value : ${mmInUnit}');
         
         this.mmInUnit = mmInUnit;
+        if (mmInUnit > 1 ) {
+            this.precision = this.axisSettings.precisionInch;
+            this.post_fix = '\"';
+
+        }
+        else {
+            this.precision = this.axisSettings.precisionMm;
+             this.post_fix = 'mm';
+        }
 
         this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
-        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual
+        /*TODO update precision in metric*/
+        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual;
+        this.target = 0;
+        if (this.modeIsTrgt) this.setMode('trgt');
+        else this.setMode('msmt');
 
     }
 
     putDiameterMode(x){
-        if (x) this.diameterFactor=2;
-        else this.diameterFactor = 1;
+        if (x) {
+            this.diameterFactor=2;
+            this.pre_fix = '\u2300 '
+        }
+        else {
+            this.diameterFactor = 1; 
+            this.pre_fix = ''
+        };
         this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
-        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual    
+        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual;    
+        this.target = 0;
+        if (this.modeIsTrgt) this.setMode('trgt');
+        else this.setMode('msmt');
     }
 
 }

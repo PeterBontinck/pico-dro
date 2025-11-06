@@ -21,8 +21,8 @@ def core1_set_axis(msg : str):
         axis_index = axis_mapping[axis_str]
         
         value_float = float(msg_dict['value'])
-        if (value_float > 9999.9 ):
-            raise ValueError('Value is > 9999.9')
+        if (value_float > settings.MAX_COUNT ):
+            raise ValueError(f'Value is > {settings.MAX_COUNT}')
         value_scaled_int = int(round(value_float))
         
         return True, axis_index,  value_scaled_int

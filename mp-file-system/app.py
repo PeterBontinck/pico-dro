@@ -35,7 +35,8 @@ def serve_get_settings(request):
         axes_settings = [
             {"name" : axis["NAME"],
             "divider" : axis["PULSES_PER_MM"],
-            "displayPrecision" :  axis["DISPLAY_PRECISION"]
+            "displayPrecisionMm" :  axis["DISPLAY_PRECISION_MM"],
+            "displayPrecisionInch" :  axis["DISPLAY_PRECISION_INCH"]
             }
             for axis in settings.AXES_SETTINGS[0:settings.NO_AXES]
         ]
