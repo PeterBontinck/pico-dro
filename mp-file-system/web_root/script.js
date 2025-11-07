@@ -90,145 +90,10 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 });
 
 
-//calculator logic
-
-const mainDisplay = document.getElementById('mainDisplay');
-const secondaryDisplay = document.getElementById('secondaryDisplay');
-const clearButton = document.getElementById('clearButton');
-
-let previousValue = 0;
-let currentOperator = null;
-let newNumberStarted = true;
-let clearStatus = 0; 
-let lastResult = 0; 
-let resultReady = false; 
-
-
-function updateSecondaryDisplay() {
-        if (currentOperator === null) {
-            secondaryDisplay.textContent = '';
-        } else {
-            secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION_CALC))} ${currentOperator}`;
-        }
-    }
-
-function handleDigit(digit) {
-        
-      
-        if (resultReady) {
-            mainDisplay.textContent = '0'; 
-            resultReady = false;
-            newNumberStarted = true; 
-        }
-
-        if (newNumberStarted) {
-            if (digit === '.') {
-                mainDisplay.textContent = '0.';
-            } else {
-                mainDisplay.textContent = digit;
-            }
-            newNumberStarted = false;
-        } else {
-            if (digit === '.' && mainDisplay.textContent.includes('.')) {
-                return;
-            }
-            mainDisplay.textContent += digit;
-        }
-        
-        clearStatus = 1; 
-        clearButton.textContent = 'CE'; 
-    }
-
-function handleOperator(nextOperator) {
-        if (currentOperator !== null && !newNumberStarted) {
-            calculate();
-        }
-        
-        previousValue = parseFloat(mainDisplay.textContent);
-        currentOperator = nextOperator;
-        
-        updateSecondaryDisplay();
-        newNumberStarted = true;
-        mainDisplay.textContent = '0';
-        resultReady = false; 
-        
-        clearStatus = 1;
-        clearButton.textContent = 'CE';
-    }
-function calculate() {
-        if (currentOperator === null) {
-            v = parseFloat(mainDisplay.textContent);
-            secondaryDisplay.textContent = `${Number(v.toFixed(PRECISION_CALC))} =`;
-            lastResult = parseFloat(mainDisplay.textContent); 
-            resultReady = true; 
-            return; 
-        }
-        
-        const currentValue = parseFloat(mainDisplay.textContent);
-        let result = 0;
-
-        switch (currentOperator) {
-            case '+': result = previousValue + currentValue; break;
-            case '-': result = previousValue - currentValue; break;
-            case '*': result = previousValue * currentValue; break;
-            case '/':
-                if (currentValue === 0) {
-                    mainDisplay.textContent = 'Fout: Deling door 0';
-                    clearAll(true);
-                    return;
-                }
-                result = previousValue / currentValue;
-                break;
-        }
-        
-        lastResult = result; 
-        
-        secondaryDisplay.textContent = `${Number(previousValue.toFixed(PRECISION_CALC))} ${currentOperator} ${Number(currentValue.toFixed(PRECISION_CALC))} =`;
-        mainDisplay.textContent = Number(result.toFixed(PRECISION_CALC))
-        
-        previousValue = result;
-        currentOperator = null;
-        newNumberStarted = true;
-        clearStatus = 1; 
-        clearButton.textContent = 'CE';
-        resultReady = true; 
-    }
-function invert(){
-    v = parseFloat(mainDisplay.textContent);
-    mainDisplay.textContent = -Number(v.toFixed(PRECISION_CALC));
-}
-
-function handleClear() {
-        if (clearStatus === 1) {
-            mainDisplay.textContent = '0';
-            clearStatus = 0; 
-            clearButton.textContent = 'C';
-            newNumberStarted = true; 
-        } else {
-            clearAll();
-        }
-    }
-    
-function clearAll(isError = false) {
-        if (!isError) {
-             mainDisplay.textContent = '0';
-        }
-        previousValue = 0;
-        currentOperator = null;
-        newNumberStarted = true;
-        secondaryDisplay.textContent = '';
-        lastResult = 0; 
-        resultReady = false; 
-        
-        clearStatus = 0;
-        clearButton.textContent = 'C';
-    }
-
-function handleUseDro(){
-    handleClear();
-    mainDisplay.textContent = activeAxis.getValue();
-  
-}
+// Calculator logic moved to `Scrips.js` as class Calculator.
+// Global wrapper functions (handleDigit, handleOperator, calculate, invert,
+// handleClear, clearAll, handleUseDro) are provided by that file so the
+// inline onclick handlers and the event listeners below keep working.
 
 //DRO logic
 
@@ -535,7 +400,6 @@ class DroAxis{
         }
 
         this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
-        /*TODO update precision in metric*/
         this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual;
         this.target = 0;
         if (this.modeIsTrgt) this.setMode('trgt');
