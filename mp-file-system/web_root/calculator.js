@@ -1,4 +1,4 @@
-// Calculator class moved out of script.js
+
 class Calculator {
     constructor(precision = 4){
         this.PRECISION_CALC = precision;
@@ -167,26 +167,14 @@ class Calculator {
         if (this.clearButton) this.clearButton.textContent = 'C';
     }
 
-    // Use DRO value in main display
-    handleUseDro(){
+    // Set the main display from external value
+    setValue(value){
         if (!this.mainDisplay) this._initDom();
         try{
-            const val = window.activeAxis?.getValue();
-            if (val !== undefined) this.mainDisplay.textContent = val;
+            if (typeof value === 'number') this.mainDisplay.textContent = value;
+            else throw new Error('Invalid value type');
         } catch(e){
             console.warn('handleUseDro failed', e);
         }
     }
 }
-
-// Instantiate and expose global wrappers so existing inline handlers keep working
-window.calculator = new Calculator(4);
-
-// Global functions used by inline onclick handlers and by script.js listeners
-window.handleDigit = function(arg){ return window.calculator.handleDigit(arg); };
-window.handleOperator = function(op){ return window.calculator.handleOperator(op); };
-window.calculate = function(){ return window.calculator.calculate(); };
-window.invert = function(){ return window.calculator.invert(); };
-window.handleClear = function(){ return window.calculator.handleClear(); };
-window.clearAll = function(isError){ return window.calculator.clearAll(isError); };
-window.handleUseDro = function(){ return window.calculator.handleUseDro(); };

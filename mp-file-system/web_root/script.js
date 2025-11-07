@@ -1,12 +1,11 @@
-//TODO total rewrite of this spaghetti
+//const
+const LONG_PRESS_TIME = 600; 
 
+//state
+window.calc = new Calculator();
 
 let pressTimer = null;
-const LONG_PRESS_TIME = 600; 
 let timePress = 0;
-
-let droDividers = [1,1,1];
-let PRECISION_CALC = 4;
 
 let droSettings = null;
 
@@ -18,11 +17,10 @@ let activeAxis = axesList[0];
 
 let isFullscreen = false;
 
-
 let imperial = false;
 let diameterMode = false;
-//onload 
 
+//onload 
 async function fetchSettings(){
     const url = '/api/settings';
  
@@ -32,7 +30,6 @@ async function fetchSettings(){
     if (response.ok) return data;
     else return none;
 }
-
 
 document.addEventListener('DOMContentLoaded', async (event) => {
     
@@ -83,19 +80,13 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     /*TODO set default options from settings?*/
     })
-
     
     activateAxis(0);
-
 });
 
 
-// Calculator logic moved to `Scrips.js` as class Calculator.
-// Global wrapper functions (handleDigit, handleOperator, calculate, invert,
-// handleClear, clearAll, handleUseDro) are provided by that file so the
-// inline onclick handlers and the event listeners below keep working.
 
-//DRO logic
+//long and short press handling of [data-shortlong] buttons
 
 function startLongPress(action) {
     clearTimeout(pressTimer);
@@ -134,61 +125,8 @@ function clearLongPress(action){
         pressTimer = null;       
 }
 
-function activateAxis(axisIndex){
 
-    axesList.forEach(axis=>{
-        if (axis instanceof DroAxis)axis.deactivate();
-    })
-
-    axesList[axisIndex].activate();
-    activeAxis = axesList[axisIndex]
-}
-
-function activeAxis_setTrgt(){
-    const value = parseFloat(mainDisplay.textContent.trim())
-    activeAxis.setTrgt(value) 
-    handleClear()
-}
-
-function activeAxis_setMsmt(){
-    const value = parseFloat(mainDisplay.textContent.trim())
-    activeAxis.setMsmt(value , socket) 
-    handleClear()
-}
-
-//websocket
-
-const host = window.location.host;
-protocol = 'ws:';
-path = '/ws';
-const wsUrl = protocol + '/' + host + path;
-const socket = new WebSocket(wsUrl);
-
-socket.onopen = function(e) {{
-              console.log("[open] Verbinding met Pico W geopend.");
-
-            }};
-
-socket.onmessage = function(event) {{
-    const eventData = JSON.parse(event.data)
-    
-    updates = eventData.changed_positions
-
-    if (updates !== undefined){
-        Object.keys(updates).forEach (key => {
-            switch (key){
-                case 'ax0' : axisIndex = 0 ;  break;
-                case 'ax1' : axisIndex = 1 ; break;
-                case 'ax2' : axisIndex = 2 ; break;
-                }
-
-            int_data = parseInt(updates[key], 10);
-
-            axesList[axisIndex].setValue(int_data);
-        }) 
-    }
-}};
-
+//menu and settings handling
 document.querySelector('.js-menu').addEventListener('click', function(event) {
     const clickedElement = event.target;
     const action = clickedElement.getAttribute('data-action');
@@ -264,163 +202,67 @@ function useDiameter(x){
     }
 }
 
-function isNotRealNumber(value){
-    return !(typeof value === 'number' && !Number.isNaN(value));
+
+
+//update and set functions for active axis
+
+function activateAxis(axisIndex){
+
+    axesList.forEach(axis=>{
+        if (axis instanceof DroAxis)axis.deactivate();
+    })
+
+    axesList[axisIndex].activate();
+    activeAxis = axesList[axisIndex]
 }
 
-class DroAxis{
-    /**
-     * 
-     * @param {string} id as used in the WS api
-    * @param {HTMLElement} domContainer 
-     * @param {Object} axisSettings the settings JSON 
-     * @param {number} noDigits the max number of digits of the display excluding sign and decimal point.
-     */
-    constructor(id, domContainer, axisSettings, noDigits){
-        this.domContainer = domContainer
-        this.nameField =domContainer.querySelector('.js-name');
-        this.mainField = domContainer.querySelector('.js-main');
-        this.secField = domContainer.querySelector('.js-sec');
-
-        this.id = id
-        this.axisSettings = axisSettings
-
-        this.value = 0.0;
-        this.target = 0.0;
-        this.dividerBase = this.axisSettings.divider;
-
-        this.mmInUnit = 1;
-        this.diameterFactor = 1; /*set tot 2 for diameter mode*/
-        this.dividerActual = this.dividerBase;
-
-        this.modeIsTrgt = false;
-
-        this.precision =this.axisSettings.precisionMm;
-        this.noDigits = noDigits;
-        this.limitValue = (10**(noDigits - this.precision )) * this.dividerActual
-
-        this.nameField.textContent = this.axisSettings.name
-        this.post_fix = 'mm'
-        this.pre_fix = ''
-    }
-
-    /**
-     * 
-     * @param {any} value  to check on type and absolute value
-     * @returns true :  if illegal
-     */
-    #illegalValue(value){
-        if (isNotRealNumber(value)){
-            console.error("DRO value is not a number : ${value}");
-            return true;
-        }
-        if (Math.abs(value) >= this.limitValue){
-            console.error("DRO absolute value is to big : ${value}");
-            return true;
-        } 
-        
-        return false;
-    }
-
-    setValue(value){
-        if (this.#illegalValue(value)) return;
-
-        this.value = value;
-
-        let float_val = this.value / this.dividerActual;
-        if (this.modeIsTrgt){
-            float_val = this.target - float_val;
-        }
-
-        this.mainField.textContent=  float_val.toFixed(this.precision);
-    }
-
-
-    setMode(mode){/* 'trgt' or 'msmt'*/
-        switch (mode){
-            case 'trgt' :
-                this.modeIsTrgt = true;
-                this.secField.textContent = this.pre_fix + this.target.toFixed(this.precision) + this.post_fix;
-                break;
-            case 'msmt' :
-                this.modeIsTrgt = false;
-                this.secField.textContent = this.pre_fix + '[' + this.post_fix + ']';
-                break;
-            default     :
-                console.error('DRO illegal mode: ${mode}');
-        }
-        this.setValue(this.value);
-    }
-
-    setMsmt(value, socket){
-        if (this.#illegalValue(value)) return;
-
-        this.setMode('msmt');
-
-        const jsonToSend = { 
-            "set_axis" : this.id,
-            "value" : value * this.dividerActual
-        }
-        const strToSend = JSON.stringify(jsonToSend )
-        socket.send(strToSend)
-    }
-
-    setTrgt(value){
-        if (this.#illegalValue(value)) return;
-        
-        this.target = value;
-        this.setMode('trgt');
-    }
-
-    activate(){
-        this.domContainer.classList.add('is-selected')
-    }
-
-    deactivate(){
-        this.domContainer.classList.remove('is-selected')
-    }
-
-    getValue(){
-        return Number(this.mainField.textContent.trim()) ;
-    }
-
-    putUnit(mmInUnit){
-         if (!(typeof mmInUnit === 'number' && !Number.isNaN(mmInUnit)))
-            console.error('mmInUnit illegal value : ${mmInUnit}');
-        
-        this.mmInUnit = mmInUnit;
-        if (mmInUnit > 1 ) {
-            this.precision = this.axisSettings.precisionInch;
-            this.post_fix = '\"';
-
-        }
-        else {
-            this.precision = this.axisSettings.precisionMm;
-             this.post_fix = 'mm';
-        }
-
-        this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
-        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual;
-        this.target = 0;
-        if (this.modeIsTrgt) this.setMode('trgt');
-        else this.setMode('msmt');
-
-    }
-
-    putDiameterMode(x){
-        if (x) {
-            this.diameterFactor=2;
-            this.pre_fix = '\u2300 '
-        }
-        else {
-            this.diameterFactor = 1; 
-            this.pre_fix = ''
-        };
-        this.dividerActual = this.dividerBase * this.mmInUnit /  this.diameterFactor;
-        this.limitValue = (10**(this.noDigits - this.precision )) * this.dividerActual;    
-        this.target = 0;
-        if (this.modeIsTrgt) this.setMode('trgt');
-        else this.setMode('msmt');
-    }
-
+function activeAxis_setTrgt(){
+    const value = parseFloat(mainDisplay.textContent.trim())
+    activeAxis.setTrgt(value) 
+    window.calc.handleClear()
 }
+
+function activeAxis_setMsmt(){
+    const value = parseFloat(mainDisplay.textContent.trim())
+    activeAxis.setMsmt(value , socket) 
+     window.calc.handleClear()
+}
+
+function handleUseDro(){
+    window.calc.setValue(activeAxis.getValue());
+}
+
+
+//websocket handling
+
+const host = window.location.host;
+let protocol = 'ws:';
+let path = '/ws';
+const wsUrl = protocol + '/' + host + path;
+const socket = new WebSocket(wsUrl);
+
+socket.onopen = function(e) {{
+              console.log("[open] connection to Pico W opened.");
+
+            }};
+
+socket.onmessage = function(event) {{
+    const eventData = JSON.parse(event.data)
+    
+    updates = eventData.changed_positions
+
+    if (updates !== undefined){
+        Object.keys(updates).forEach (key => {
+            switch (key){
+                case 'ax0' : axisIndex = 0 ;  break;
+                case 'ax1' : axisIndex = 1 ; break;
+                case 'ax2' : axisIndex = 2 ; break;
+                }
+
+            int_data = parseInt(updates[key], 10);
+
+            axesList[axisIndex].setValue(int_data);
+        }) 
+    }
+}};
+

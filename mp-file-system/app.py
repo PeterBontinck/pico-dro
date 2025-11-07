@@ -24,9 +24,13 @@ def serve_favicon(request):
 def serve_javascript(request):
     return send_file('web_root/script.js', content_type='application/javascript')
 
-@app.route('/Script.js')
+@app.route('/calculator.js')
 def serve_javascript(request):
-    return send_file('web_root/Script.js', content_type='application/javascript')
+    return send_file('web_root/calculator.js', content_type='application/javascript')
+
+@app.route('/dro.js')
+def serve_javascript(request):
+    return send_file('web_root/dro.js', content_type='application/javascript')
 
 @app.route('/style.css')
 def serve_style(request):

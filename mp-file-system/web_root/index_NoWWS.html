@@ -90,35 +90,36 @@
                 <div class="small_font" id="secondaryDisplay"> 5a</div>
 			    <div class="medium_font" id="mainDisplay"> 5b</div>	  
             </button>
-            <button class="btn calc__ce" id="clearButton" onclick="handleClear()">C</button>
+            <button class="btn calc__ce" id="clearButton" onclick="window.calc.handleClear()">C</button>
             <button class="btn">M1</button>
             <button class="btn">M2</button>
-            <button class="btn calc__operator" onclick="invert()">+/-</button>
-            
-            <button class="btn calc__digit " onclick="handleDigit('7')">7</button>
-            <button class="btn calc__digit" onclick="handleDigit('8')">8</button>
-            <button class="btn calc__digit" onclick="handleDigit('9')">9</button>
-            <button class="btn calc__operator" onclick="handleOperator('/')">/</button>
+            <button class="btn calc__operator" onclick="window.calc.invert()">+/-</button>
 
-            <button class="btn calc__digit" onclick="handleDigit('4')">4</button>
-            <button class="btn calc__digit" onclick="handleDigit('5')">5</button>
-            <button class="btn calc__digit" onclick="handleDigit('6')">6</button>
-            <button class="btn calc__operator" onclick="handleOperator('*')" >*</button>
+            <button class="btn calc__digit " onclick="window.calc.handleDigit('7')">7</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('8')">8</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('9')">9</button>
+            <button class="btn calc__operator" onclick="window.calc.handleOperator('/')">/</button>
 
-            <button class="btn calc__digit" onclick="handleDigit('1')">1</button>
-            <button class="btn calc__digit" onclick="handleDigit('2')">2</button>
-            <button class="btn calc__digit" onclick="handleDigit('3')">3</button>
-            <button class="btn calc__operator" onclick="handleOperator('-')">-</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('4')">4</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('5')">5</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('6')">6</button>
+            <button class="btn calc__operator" onclick="window.calc.handleOperator('*')" >*</button>
 
-            <button class="btn calc__digit" onclick="handleDigit('0')">0</button>
-            <button class="btn calc__digit" onclick="handleDigit('.')">.</button>
-            <button class="btn calc__enter" onclick="calculate()">=</button>
-            <button class="btn calc__operator" onclick="handleOperator('+')">+</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('1')">1</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('2')">2</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('3')">3</button>
+            <button class="btn calc__operator" onclick="window.calc.handleOperator('-')">-</button>
+
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('0')">0</button>
+            <button class="btn calc__digit" onclick="window.calc.handleDigit('.')">.</button>
+            <button class="btn calc__enter" onclick="window.calc.calculate()">=</button>
+            <button class="btn calc__operator" onclick="window.calc.handleOperator('+')">+</button>
        
         </div>
     </div>
 
-<script src="Scrips.js" defer></script>
+<script src="calculator.js" defer></script>
+<script src="dro.js" defer></script>
 <script src="script.js" defer></script>
 
 </body>
