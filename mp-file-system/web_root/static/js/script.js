@@ -2,7 +2,13 @@
 const LONG_PRESS_TIME = 600; 
 
 //state
+
 window.calc = new Calculator();
+window.ws = null;
+
+let timeout_ms = 5000; //5 seconds
+
+let heartbeatTimer = null;
 
 let pressTimer = null;
 let timePress = 0;
@@ -30,6 +36,8 @@ async function fetchSettings(){
     if (response.ok) return data;
     else return none;
 }
+
+connectWebSocket();
 
 document.addEventListener('DOMContentLoaded', async (event) => {
     
@@ -84,6 +92,14 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     activateAxis(0);
 });
 
+//handle reconnect after tab was inactive
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (window.ws && (window.ws.readyState === WebSocket.CLOSED || window.ws.readyState === WebSocket.CLOSING)) {
+            reconnect();
+        } else console.log("page is waking up, websocket was still there.");
+    }
+});
 
 
 //long and short press handling of [data-shortlong] buttons
@@ -219,13 +235,13 @@ function activateAxis(axisIndex){
 function activeAxis_setTrgt(){
     const value = parseFloat(mainDisplay.textContent.trim())
     activeAxis.setTrgt(value) 
-    window.calc.handleClear()
+    window.calc.clearAll()
 }
 
 function activeAxis_setMsmt(){
     const value = parseFloat(mainDisplay.textContent.trim())
-    activeAxis.setMsmt(value , socket) 
-     window.calc.handleClear()
+    activeAxis.setMsmt(value , window.ws) 
+    window.calc.clearAll()
 }
 
 function handleUseDro(){
@@ -235,34 +251,73 @@ function handleUseDro(){
 
 //websocket handling
 
-const host = window.location.host;
-let protocol = 'ws:';
-let path = '/ws';
-const wsUrl = protocol + '/' + host + path;
-const socket = new WebSocket(wsUrl);
+function connectWebSocket() {
+    const host = window.location.host;
+    let protocol = 'ws:';
+    let path = '/ws';
+    const wsUrl = protocol + '/' + host + path;
 
-socket.onopen = function(e) {{
-              console.log("[open] connection to Pico W opened.");
+    window.ws = new WebSocket(wsUrl);
 
-            }};
+    window.ws.onopen = (event) =>  {
+        console.log("[open] connection to Pico W opened.");
+        element = document.querySelector('.js-app-display');
+        element.classList.remove('ws-status-disconnected');
+        heartbeatTimer = setTimeout(() => handleTimeout(), timeout_ms);
+        };
 
-socket.onmessage = function(event) {{
-    const eventData = JSON.parse(event.data)
-    
-    updates = eventData.changed_positions
+    window.ws.onclose = (event) => {
+        console.warn("WebSocket disconnected. Code:", event.code);
+        
+        if (!event.wasClean) {
+            setTimeout(reconnect, 5000); 
+            }
+        };
 
-    if (updates !== undefined){
-        Object.keys(updates).forEach (key => {
-            switch (key){
-                case 'ax0' : axisIndex = 0 ;  break;
-                case 'ax1' : axisIndex = 1 ; break;
-                case 'ax2' : axisIndex = 2 ; break;
-                }
+    window.ws.onerror = (error) => {
+        console.error("WebSocket fout:", error);
+        window.ws.close();
+    };
 
-            int_data = parseInt(updates[key], 10);
+    window.ws.onmessage = (event) => {
+        if (event.data === 'ping') {
+            console.log("ping received");
+            window.ws.send('pong');
+            clearTimeout(heartbeatTimer);
+            heartbeatTimer = setTimeout(() => handleTimeout(), timeout_ms);
+            return;
+        }
 
-            axesList[axisIndex].setValue(int_data);
-        }) 
+        const eventData = JSON.parse(event.data)
+        
+        updates = eventData.changed_positions
+
+        if (updates !== undefined){
+            Object.keys(updates).forEach (key => {
+                switch (key){
+                    case 'ax0' : axisIndex = 0 ; break;
+                    case 'ax1' : axisIndex = 1 ; break;
+                    case 'ax2' : axisIndex = 2 ; break;
+                    }
+
+                int_data = parseInt(updates[key], 10);
+
+                axesList[axisIndex].setValue(int_data);
+            }) 
+        }
+    };
+}
+
+function reconnect() {
+    console.log("busy reconnecting...");
+    if (window.ws && window.ws.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
     }
-}};
+}
 
+function handleTimeout() {
+    console.warn("No heartbeat received in time, reconnecting...");
+    element = document.querySelector('.js-app-display');
+    element.classList.add('ws-status-disconnected');
+    reconnect();
+}   

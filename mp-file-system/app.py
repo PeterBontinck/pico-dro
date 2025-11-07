@@ -1,5 +1,6 @@
 from lib.microdot import Microdot, Response, Request, send_file, abort
 from lib.websocket import with_websocket, WebSocket, WebSocketError
+from hbwebsocket import HbWebSocket
 
 import _thread
 import asyncio
@@ -11,34 +12,26 @@ from sys import print_exception
 app = Microdot()
 import app_state
 
+INDEX_FILE = 'web_root/index_NoWWS.html'
+FAFVICON_FILE = 'web_root/static/img/favicon.ico'
+STATIC_FOLDER = 'web_root/static'
+
 @app.route('/')
 def serve_index(request):
     #return open('web_root/index_NoWWS.html').read(), 200, {'Content-Type': 'text/html'}
-    return send_file('web_root/index_NoWWS.html', content_type='text/html')
+    return send_file(INDEX_FILE, content_type='text/html')
 
 @app.route('/favicon.ico')
 def serve_favicon(request):
-    return send_file('web_root/favicon.ico', content_type='image/x-icon')
+    return send_file(FAFVICON_FILE, content_type='image/x-icon')
 
-@app.route('/script.js')
-def serve_javascript(request):
-    return send_file('web_root/script.js', content_type='application/javascript')
-
-@app.route('/calculator.js')
-def serve_javascript(request):
-    return send_file('web_root/calculator.js', content_type='application/javascript')
-
-@app.route('/dro.js')
-def serve_javascript(request):
-    return send_file('web_root/dro.js', content_type='application/javascript')
-
-@app.route('/style.css')
-def serve_style(request):
-    return send_file('web_root/style.css', content_type='text/css')
+@app.route('/static/<path:path>')
+def static_files(request, path):
+    print(f"Serving static file: {STATIC_FOLDER + '/' + path}")
+    return send_file(STATIC_FOLDER + '/' + path)
 
 @app.route('/api/settings')
 def serve_get_settings(request):
-    
     try:     
         axes_settings = [
             {"name" : axis["NAME"],
@@ -66,19 +59,27 @@ def serve_get_settings(request):
 
 @app.route('/ws')
 @with_websocket
-async def ws(request:Request, ws : WebSocket): 
-    app_state.clients.add(ws)
-    print(f"Client: {request.client_addr} connected, Total: {len(app_state.clients)}")
+async def ws(request:Request, ws:WebSocket): 
     
+    hbws = HbWebSocket(request, ws, app_state.clients)
+    app_state.clients.add(hbws)
+    print(f"Client: {request.client_addr} connected, Total: {len(app_state.clients)}")
+    await hbws.start_heartbeat()
+
     try:
         
         while True:
-            client_data = await ws.receive()
+            client_data = await hbws.ws.receive()
+            
+            if client_data == 'pong':
+                hbws.handle_pong()
+                print(f"pong received : {request.client_addr}")
+                continue
             
             await asyncio.sleep(0.1)
             
             if client_data:
-                print(f"Bericht ontvangen: {client_data}")
+                print(f"Bericht ontvangen: {request.client_addr} : {client_data}")
                 await axes_set_core0(client_data) #send data to core1
                
            
@@ -93,8 +94,10 @@ async def ws(request:Request, ws : WebSocket):
         print_exception(e)
     
     finally:
-        app_state.clients.remove(ws)
-        print(f"Client: {request.client_addr} DIS-connected. Total: {len(app_state.clients)}")
+        await hbws.stop_heartbeat()
+        if hbws in app_state.clients:
+            app_state.clients.remove(hbws)
+            print(f"Client: {request.client_addr} DIS-connected. Total: {len(app_state.clients)}")
 
 
 async def start_app():
@@ -103,9 +106,9 @@ async def start_app():
     
 async def broadcast(message):
 
-    for ws in app_state.clients:
+    for hbws in app_state.clients:
         try:
-            await ws.send(message)
+            await hbws.ws.send(message)
         except Exception as e:
             # Client connection lost
             print(f"Error from websocket:")
@@ -119,4 +122,4 @@ async def axes_set_core0(msg):
     app_state.axes_set = True
     app_state.axes_set_msg_lock.release()
     
-    
+

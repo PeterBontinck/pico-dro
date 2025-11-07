@@ -1,4 +1,4 @@
-import quadratureEncoder as qe, lib.microdot as md, lib.websocket as ws
+import quadratureEncoder as qe, lib.microdot as md, hbwebsocket as ws
 import _thread
 try:
     from typing import Set
@@ -31,4 +31,4 @@ WLAN = None
 
 app : md.Microdot = None 
 
-clients : Set[ws.WebSocket]= set()
+clients : Set[ws.HbWebSocket]= set()

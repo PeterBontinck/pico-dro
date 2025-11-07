@@ -1,3 +1,5 @@
+//TODO add shift function sqrt, power2, sin, cos, tan, aint, acos atan 
+// .
 
 class Calculator {
     constructor(precision = 4){
@@ -10,11 +12,13 @@ class Calculator {
         this.clearStatus = 0;
         this.lastResult = 0;
         this.resultReady = false;
+        this.memoryValues= [0,0]; //M1, M2
 
         // DOM refs
         this.mainDisplay = null;
         this.secondaryDisplay = null;
         this.clearButton = null;
+        this.memoryButtons = [];
 
         // initialize when DOM ready
         if (document.readyState === 'loading') {
@@ -28,6 +32,7 @@ class Calculator {
         this.mainDisplay = document.getElementById('mainDisplay');
         this.secondaryDisplay = document.getElementById('secondaryDisplay');
         this.clearButton = document.getElementById('clearButton');
+        this.memoryButtons = document.querySelectorAll('[data-m]');
     }
 
     _fmt(v){
@@ -175,6 +180,25 @@ class Calculator {
             else throw new Error('Invalid value type');
         } catch(e){
             console.warn('handleUseDro failed', e);
+        }
+    }
+
+    handleMemory(m){
+        if (!this.mainDisplay) this._initDom();
+        let currentValue = parseFloat(this.mainDisplay.textContent);
+       
+        try{ 
+            if (isNaN(currentValue)) throw new Error('Invalid number in main display');
+            if (m < 0 || m >= this.memoryValues.length) throw new Error('Invalid memory slot');
+            if (currentValue !== 0) {
+                this.memoryValues[m] = currentValue;
+                this.memoryButtons[m].innerHTML = `M${m+1} <br> ${this._fmt(this.memoryValues[m])}`;
+                this.memoryButtons[m].classList.add('memory-has-value');
+                this.clearAll();
+            }
+            else this.mainDisplay.textContent = this.memoryValues[m];
+        } catch(e){
+            console.warn('handleMemory failed', e);
         }
     }
 }

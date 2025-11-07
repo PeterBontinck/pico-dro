@@ -7,11 +7,11 @@
     <title>Dro</title>
 
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="static/css/style.css">
 
 
 </head>
-<body class="_app_color">
+<body class="_app_color js-app-display">
     <div class="app">
         <div class="dro__frame">
             <div class="dro__readOuts">
@@ -87,12 +87,12 @@
         </div>
         <div class="calc__frame">
             <button class = "disp calc__disp"> 
-                <div class="small_font" id="secondaryDisplay"> 5a</div>
-			    <div class="medium_font" id="mainDisplay"> 5b</div>	  
+                <div class="small_font" id="secondaryDisplay"></div>
+			    <div class="medium_font" id="mainDisplay">0</div>	  
             </button>
             <button class="btn calc__ce" id="clearButton" onclick="window.calc.handleClear()">C</button>
-            <button class="btn">M1</button>
-            <button class="btn">M2</button>
+            <button class="btn" onclick="window.calc.handleMemory(0)" data-m = '0'>M1</button>
+            <button class="btn" onclick="window.calc.handleMemory(1)" data-m = '1'>M2</button>
             <button class="btn calc__operator" onclick="window.calc.invert()">+/-</button>
 
             <button class="btn calc__digit " onclick="window.calc.handleDigit('7')">7</button>
@@ -118,9 +118,9 @@
         </div>
     </div>
 
-<script src="calculator.js" defer></script>
-<script src="dro.js" defer></script>
-<script src="script.js" defer></script>
+<script src="static/js/calculator.js" defer></script>
+<script src="static/js/dro.js" defer></script>
+<script src="static/js/script.js" defer></script>
 
 </body>
 </html>

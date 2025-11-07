@@ -19,6 +19,7 @@
         --mfont : 10dvh;
         --sfont : 8dvh;
         --xsfont :4dvh;
+        --xxsfont :2dvh;
     }
 
     .app {
@@ -50,6 +51,7 @@
         --mfont : 5dvh;
         --sfont : 4dvh;
         --xsfont :2dvh;
+        --xxsfont :1dvh;
     }
   .app {
         display: grid; 
@@ -220,6 +222,15 @@ html, body {
 
 }
 
+.memory-has-value{
+    font-size: var(--xsfont) !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.ws-status-disconnected{
+    background-color: #690c0c;
+}
 
 /*font modifiers*/
 .large_font{
