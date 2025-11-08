@@ -28,10 +28,16 @@ This project transforms a **Raspberry Pi Pico W** into a fully functional **Digi
 * **Connect the Pico2W :** via USB to your computer 
 * **In a terminal go to the project directory :** `..\Pico-dro>`
 * **Use mpremote to upload the firmware to the Pico W:**  `mpremote fs cp -r mp-file-system/. :`
-* **The Pico W will now automatically connect to your wifi network, start the webserver on every power-up** 
+* **To Manually start the firmware:** `mpremote exec "import boot_disabled"`
+* **The Pico W firmware will connect to your wifi network and start the webserver** 
+
+TODO add screenshot
+TODO rename to `boot.py` and `main.py` on not use`mpremote exec "import boot_disabled"` and start the firmware on power-up
+
 
 ---
 
 ### Tags
 
 `raspberry-pi-pico-w` `dro` `digital-readout` `linear-scale` `micropython` `web-interface` `machine-tool`
+
