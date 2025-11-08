@@ -21,7 +21,7 @@ This project transforms a **Raspberry Pi Pico W** into a fully functional **Digi
 * **Make sure the pico W flash is empty**  see https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html#resetting-flash-memory
 * **Install microPython on the Pico W:**  see https://www.raspberrypi.com/documentation/microcontrollers/micropython.html
 
-* **Install mpremote:**   pip install mpremote (see https://docs.micropython.org/en/latest/reference/mpremote.html)
+* **Install mpremote:**   `pip install mpremote` (see https://docs.micropython.org/en/latest/reference/mpremote.html)
 * **Download or Clone project :**  (see https://github.com/PeterBontinck/pico-dro.git) 
 * **config your wifi settings** in a file  `..\Pico-dro\mp-file-system/wifi_secret.py`
 * **Configure the firmware** update the file `..\Pico-dro\mp-file-system/settings.py`
