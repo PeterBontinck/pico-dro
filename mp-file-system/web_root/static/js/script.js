@@ -1,3 +1,9 @@
+/* Copyright (c) 2025 Peter Bontinck
+ * SPDX-License-Identifier: MIT
+ * See LICENSE
+ */
+
+
 //const
 const LONG_PRESS_TIME = 600; 
 
@@ -5,6 +11,10 @@ const LONG_PRESS_TIME = 600;
 
 window.calc = new Calculator();
 window.ws = null;
+
+window.appDisplay = null;
+
+window.isLoaded = false;
 
 let timeout_ms = 5000; //5 seconds
 
@@ -37,7 +47,7 @@ async function fetchSettings(){
     else return none;
 }
 
-connectWebSocket();
+
 
 document.addEventListener('DOMContentLoaded', async (event) => {
     
@@ -89,16 +99,13 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     /*TODO set default options from settings?*/
     })
     
-    activateAxis(0);
-});
+    window.appDisplay = document.querySelector('.js-app-display');
 
-//handle reconnect after tab was inactive
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        if (window.ws && (window.ws.readyState === WebSocket.CLOSED || window.ws.readyState === WebSocket.CLOSING)) {
-            reconnect();
-        } else console.log("page is waking up, websocket was still there.");
-    }
+    activateAxis(0);
+
+    window.isLoaded = true;
+
+    connectWebSocket();
 });
 
 
@@ -261,8 +268,7 @@ function connectWebSocket() {
 
     window.ws.onopen = (event) =>  {
         console.log("[open] connection to Pico W opened.");
-        element = document.querySelector('.js-app-display');
-        element.classList.remove('ws-status-disconnected');
+        window.appDisplay.classList.remove('ws-status-disconnected');
         heartbeatTimer = setTimeout(() => handleTimeout(), timeout_ms);
         };
 
@@ -282,6 +288,7 @@ function connectWebSocket() {
     window.ws.onmessage = (event) => {
         if (event.data === 'ping') {
             console.log("ping received");
+            window.appDisplay.classList.remove('ws-status-disconnected');
             window.ws.send('pong');
             clearTimeout(heartbeatTimer);
             heartbeatTimer = setTimeout(() => handleTimeout(), timeout_ms);
@@ -317,7 +324,6 @@ function reconnect() {
 
 function handleTimeout() {
     console.warn("No heartbeat received in time, reconnecting...");
-    element = document.querySelector('.js-app-display');
-    element.classList.add('ws-status-disconnected');
+    window.appDisplay.classList.add('ws-status-disconnected');
     reconnect();
 }   

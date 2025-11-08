@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
+
 from lib.microdot import Microdot, Response, Request, send_file, abort
 from lib.websocket import with_websocket, WebSocket, WebSocketError
 from hbwebsocket import HbWebSocket
@@ -47,7 +51,8 @@ def serve_get_settings(request):
             "noAxes" : settings.NO_AXES,
             "isLathe" : settings.IS_LATHE, 
             "noDisplayDigits": settings.NO_DISPLAY_DIGITS,
-            "axesSettings" : axes_settings
+            "axesSettings" : axes_settings,
+            "heartbeatTimeoutMs": settings.HEARTBEAT_INTERVAL_MS + settings.TIMEOUT_MS
         }
     
     except Exception as e:
@@ -67,6 +72,8 @@ async def ws(request:Request, ws:WebSocket):
     await hbws.start_heartbeat()
 
     try:
+        
+        await hbws.ws.send(app_state.core0LastMsg)
         
         while True:
             client_data = await hbws.ws.receive()

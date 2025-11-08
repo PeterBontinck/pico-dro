@@ -1,3 +1,9 @@
+# Copyright (c) 2019 Miguel Grinberg
+# This file is part of a bundled third-party library and is licensed under
+# the MIT License. Full license text and copyright notice are in:
+# THIRD_PARTY_LICENSES/MICRODOT_MIT.txt
+
+
 import binascii
 import hashlib
 from microdot import Request, Response

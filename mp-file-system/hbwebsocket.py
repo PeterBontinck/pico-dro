@@ -1,9 +1,14 @@
-#from lib.microdot import Microdot, Response, Request, send_file, abort
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
+
 from lib.websocket import with_websocket, WebSocket, WebSocketError
 import asyncio
 import settings
 from sys import print_exception
 from time import ticks_ms
+
+
 
 class HbWebSocket(WebSocket):
     def __init__(self, request, socket, clientList):
@@ -15,14 +20,14 @@ class HbWebSocket(WebSocket):
         
 
     async def _heartbeat_ping(self):
-        
-        sleep_time_s = settings.HARTBEAT_INTERVAL_MS / 1000.0
+
+        sleep_time_s = settings.HEARTBEAT_INTERVAL_MS / 1000.0
         while True:
             try:
                 await asyncio.sleep(sleep_time_s)
                 current_time = ticks_ms()
-                
-                if current_time - self.last_pong > settings.TIMEOUT_MS + settings.HARTBEAT_INTERVAL_MS:
+
+                if current_time - self.last_pong > settings.TIMEOUT_MS + settings.HEARTBEAT_INTERVAL_MS:
                     await self.ws.close()
                     self.clientList.remove(self)
                     print(f"Heartbeat : No pong received in time, closing connection.")
@@ -47,7 +52,6 @@ class HbWebSocket(WebSocket):
     async def stop_heartbeat(self):
         if self.ping_task:
                 self.ping_task.cancel()
-                
     
     def handle_pong(self):
         self.last_pong = ticks_ms() 

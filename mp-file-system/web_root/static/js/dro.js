@@ -1,3 +1,7 @@
+/* Copyright (c) 2025 Peter Bontinck
+ * SPDX-License-Identifier: MIT
+ * See LICENSE
+ */
 
 class DroAxis{
     /**

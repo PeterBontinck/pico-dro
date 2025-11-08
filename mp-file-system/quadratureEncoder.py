@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
+
 from rp2 import PIO, StateMachine, asm_pio
 import array
 import machine

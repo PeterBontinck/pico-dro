@@ -1,4 +1,4 @@
-# WORK IN PROGRESS (WIP) - Digital Readout (DRO) via Web Interface using Raspberry Pi Pico W
+# Digital Readout (DRO) via Web Interface using Raspberry Pi Pico W
 
 This project transforms a **Raspberry Pi Pico W** into a fully functional **Digital Readout (DRO)** system for machine tools (e.g., mills or lathes). It achieves this by reading the data output from **linear glass scales** and serving the measurements over a **web interface**.
 
@@ -18,10 +18,17 @@ This project transforms a **Raspberry Pi Pico W** into a fully functional **Digi
 
 ## Get started
 * **Install Python3:** Make sure the latest version of Python is installed on your pc
-* **Install microPython on the Pico w:**  see https://www.raspberrypi.com/documentation/microcontrollers/micropython.html
-* **Install depencencys:** run install_dep.sh in a **bash** terminal
+* **Make sure the pico W flash is empty**  see https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html#resetting-flash-memory
+* **Install microPython on the Pico W:**  see https://www.raspberrypi.com/documentation/microcontrollers/micropython.html
 
-* **Copy the to the pico:** <TODO> , run xxxx.sh in a **bash** teminal
+* **Install mpremote:**   pip install mpremote (see https://docs.micropython.org/en/latest/reference/mpremote.html)
+* **Download or Clone project :**  (see https://github.com/PeterBontinck/pico-dro.git) 
+* **config your wifi settings** in a file  'mp-file-system/wifi_secret.py'
+* **Configure the firmware** update the file 'mp-file-system/settings.py'
+* **Connect the Pico2W :** via USB to your computer 
+* **In a terminal go to the project directory :** '..\Pico-dro>'
+* **Use mpremote to upload the firmware to the Pico W:**  'mpremote fs cp -r mp-file-system/. :'
+* **The Pico W will now automatically connect to your wifi network, start the webserver on every power-up** 
 
 ---
 

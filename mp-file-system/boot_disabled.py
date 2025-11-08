@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
 
 print("Booting up the Pico")
 

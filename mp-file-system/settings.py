@@ -1,4 +1,7 @@
-#axis
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
+
 NO_AXES = 2 #Max 3
 IS_LATHE = True  #for the fist axis a diameter mode will become available
 NO_DISPLAY_DIGITS = 6 #excluding sign and decimal point
@@ -43,5 +46,5 @@ DNS_SERVER = '8.8.8.8'
 USE_HOST_NAME = False
 HOST_NAME = "PICO_DRO"
 
-HARTBEAT_INTERVAL_MS = 3000  #interval in milliseconds to send heartbeat to connected clients
+HEARTBEAT_INTERVAL_MS = 3000  #interval in milliseconds to send heartbeat to connected clients
 TIMEOUT_MS = 2000  #time in milliseconds after which a client is disconnected when no pong after heartbeat is received

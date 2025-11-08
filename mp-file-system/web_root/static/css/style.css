@@ -1,3 +1,7 @@
+/* Copyright (c) 2025 Peter Bontinck
+ * SPDX-License-Identifier: MIT
+ * See LICENSE
+ */
 @media screen and (orientation: landscape) {
     :root{
         --dro-frametop: 85dvh;

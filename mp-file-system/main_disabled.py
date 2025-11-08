@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
 
 import asyncio
 import app_state, settings, app
@@ -118,7 +121,8 @@ async def broadcast_scheduler_task():
                 app_state.axes_changed = False
                 
             app_state.axes_change_msg_lock.release()
-            
+
+            app_state.core0LastMsg = msg_core0
             if do_broadcast:
                 await app.broadcast(msg_core0)
                 do_broadcast = False    

@@ -1,3 +1,7 @@
+# Copyright (c) 2025 Peter Bontinck
+# SPDX-License-Identifier: MIT
+# See LICENSE
+
 import quadratureEncoder as qe, lib.microdot as md, hbwebsocket as ws
 import _thread
 try:
@@ -28,6 +32,8 @@ axes_set : bool = False #under lock axes_set_msg_lock
 WLAN = None
 
 #Microdot web server
+
+core0LastMsg : str = ""
 
 app : md.Microdot = None 
 

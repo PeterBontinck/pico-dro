@@ -1,5 +1,11 @@
+/* Copyright (c) 2025 Peter Bontinck
+ * SPDX-License-Identifier: MIT
+ * See LICENSE
+ */
+
+
 //TODO add shift function sqrt, power2, sin, cos, tan, aint, acos atan 
-// .
+
 
 class Calculator {
     constructor(precision = 4){
