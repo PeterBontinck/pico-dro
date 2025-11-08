@@ -23,11 +23,11 @@ This project transforms a **Raspberry Pi Pico W** into a fully functional **Digi
 
 * **Install mpremote:**   pip install mpremote (see https://docs.micropython.org/en/latest/reference/mpremote.html)
 * **Download or Clone project :**  (see https://github.com/PeterBontinck/pico-dro.git) 
-* **config your wifi settings** in a file  'mp-file-system/wifi_secret.py'
-* **Configure the firmware** update the file 'mp-file-system/settings.py'
+* **config your wifi settings** in a file  `..\Pico-dro\mp-file-system/wifi_secret.py`
+* **Configure the firmware** update the file `..\Pico-dro\mp-file-system/settings.py`
 * **Connect the Pico2W :** via USB to your computer 
-* **In a terminal go to the project directory :** '..\Pico-dro>'
-* **Use mpremote to upload the firmware to the Pico W:**  'mpremote fs cp -r mp-file-system/. :'
+* **In a terminal go to the project directory :** `..\Pico-dro>`
+* **Use mpremote to upload the firmware to the Pico W:**  `mpremote fs cp -r mp-file-system/. :`
 * **The Pico W will now automatically connect to your wifi network, start the webserver on every power-up** 
 
 ---
